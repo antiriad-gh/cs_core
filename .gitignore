@@ -1,0 +1,12 @@
+bin/
+obj/
+log/
+.next/
+upload/
+node_modules/
+*.kate-swp
+*.dll
+*.zip
+*.mem
+*.bin
+*.tar.gz

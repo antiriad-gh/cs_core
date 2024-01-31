@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <!-- <OutputType>Exe</OutputType> -->
+    <TargetFramework>net7.0</TargetFramework>
+    <RootNamespace>Antiriad.Core</RootNamespace>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <!-- <SignAssembly>true</SignAssembly>
+    <AssemblyOriginatorKeyFile>Antiriad.Core.snk</AssemblyOriginatorKeyFile> -->
+    <!-- <RuntimeIdentifier>linux-x64</RuntimeIdentifier> -->
+    <!-- <RuntimeIdentifier>linux-arm</RuntimeIdentifier> -->
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="System.IO.Ports" Version="*" />
+    <PackageReference Include="System.Reflection.Emit" Version="*" />
+    <PackageReference Include="System.Configuration.ConfigurationManager" Version="*" />
+    <PackageReference Include="System.Diagnostics.Process" Version="*" />
+    <!-- <PackageReference Include="Microsoft.Extensions.Configuration" Version="7.0.0" /> -->
+  </ItemGroup>
+</Project>
