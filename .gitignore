@@ -1,6 +1,6 @@
 bin/
 obj/
-log/
+*.log
 .next/
 upload/
 node_modules/
