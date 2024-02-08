@@ -19,38 +19,49 @@ public sealed class Trace
     {
       if (logger is null)
       {
-        LogConfiguration fileconf;
-        ApplicationPath = AppDomain.CurrentDomain.BaseDirectory;
+        LogConfiguration conf;
 
         try
         {
-          fileconf = Configuration.Read<LogConfiguration>("Log");
-          fileconf ??= new LogConfiguration();
+          conf = Configuration.Read<LogConfiguration>("Log");
+          conf ??= new LogConfiguration();
         }
         catch (Exception e)
         {
-          fileconf = new LogConfiguration();
+          conf = new LogConfiguration();
           System.Diagnostics.Trace.WriteLine($@"Trace() failed with msg '{e}'");
         }
 
-        var pathsep = Path.DirectorySeparatorChar;
-        var rootCurrent = $".{pathsep}";
-        var oldsep = pathsep == '/' ? "\\" : "/";
-        var newsep = pathsep == '/' ? "/" : "\\";
-
-        fileconf.Path = fileconf.Path.Replace(oldsep, newsep);
-
-        if (fileconf.Path.StartsWith(rootCurrent))
-        {
-          fileconf.Path = Path.Combine(ApplicationPath, fileconf.Path[rootCurrent.Length..]);
-        }
-
-        fileconf.MaxFileSize = int.Min(fileconf.MaxFileSize * 1024, 10 * 1_048_576);
-        logger = new Logger(fileconf);
+        Configure(conf);
       }
+
+      if (logger == null)
+        throw new Exception("Logger cannot be configured");
     }
 
     return logger;
+  }
+
+  public static void Configure(LogConfiguration conf)
+  {
+    lock (locker)
+    {
+      var pathsep = Path.DirectorySeparatorChar;
+      var rootCurrent = $".{pathsep}";
+      var oldsep = pathsep == '/' ? "\\" : "/";
+      var newsep = pathsep == '/' ? "/" : "\\";
+
+      conf.Path = conf.Path.Replace(oldsep, newsep);
+      ApplicationPath = AppDomain.CurrentDomain.BaseDirectory;
+
+      if (conf.Path.StartsWith(rootCurrent))
+      {
+        conf.Path = Path.Combine(ApplicationPath, conf.Path[rootCurrent.Length..]);
+      }
+
+      conf.MaxFileSize = int.Min(conf.MaxFileSize * 1024, 10 * 1_048_576);
+      logger = new Logger(conf);
+    }
   }
 
   public static LogConfiguration GetConfig() => (logger ?? Initialize()).Config;
