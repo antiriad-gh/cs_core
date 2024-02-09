@@ -60,10 +60,10 @@ class Program
 
     SpanWriter w = new(s);
     w.WriteByte(1);
-    w.WriteUInt16(ushort.MaxValue);
+    w.WriteUShort(ushort.MaxValue);
     SpanReader p = new(s);
     var v1 = p.ReadByte();
-    var v2 = p.ReadUInt16();
+    var v2 = p.ReadUShort();
 
     var now = DateTime.Now;
     Trace.Debug($"test={1} stamp={now:HH:mm:ss.fff}");

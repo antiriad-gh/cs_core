@@ -8,9 +8,9 @@ public class ConnectorServerListener<T> where T : ConnectorServer
 {
   private readonly object clientLock = new();
   private readonly string listenAddress;
-  private ConnectorServer server;
   private readonly List<Connector> clients = new();
   private readonly IConnectorListenerEvents connectorListener;
+  private ConnectorServer? server;
 
   /// <summary>
   /// constructor
@@ -46,8 +46,13 @@ public class ConnectorServerListener<T> where T : ConnectorServer
   {
     try
     {
-      this.server ??= (T)Activator.CreateInstance(typeof(T), this.listenAddress);
-      this.server.Activate(this.connectorListener);
+      if (this.server == null)
+      {
+        var serverInstance = Activator.CreateInstance(typeof(T), this.listenAddress);
+        if (serverInstance != null)
+          this.server = (T)serverInstance;
+      }
+      this.server?.Activate(this.connectorListener);
     }
     catch (Exception ex)
     {

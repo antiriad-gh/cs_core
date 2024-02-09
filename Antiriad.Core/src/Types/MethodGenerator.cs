@@ -153,10 +153,10 @@ public static class MethodGenerator
   }
 
   // object(object, object[]) / void(object, object[])
-  public static object? MakeUntypedDelegateArrayArgument(Type delegateType, MethodInfo method, Type handlerType)
+  public static object MakeUntypedDelegateArrayArgument(Type delegateType, MethodInfo method, Type handlerType)
   {
     if (method == null)
-      return null;
+      throw new Exception("method info cannot be null");
 
     var isfunc = method.ReturnType != typeof(void);
     var sargs = method.GetParameters().Select(i => i.ParameterType).ToArray();
