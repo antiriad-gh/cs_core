@@ -13,10 +13,7 @@ public static class Configuration
   public static T Read<T>(string file, string? section = null) where T : new()
   {
     if (!File.Exists(file))
-    {
-      Trace.Warning($"cannot find configuration file={file}");
-      return new T();
-    }
+      throw new Exception($"cannot read configuration file={file} section={section}");
 
     var reader = new ConfigurationReader(file, section);
     return reader.Get<T>();

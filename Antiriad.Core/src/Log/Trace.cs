@@ -55,9 +55,7 @@ public sealed class Trace
       ApplicationPath = AppDomain.CurrentDomain.BaseDirectory;
 
       if (conf.Path.StartsWith(rootCurrent))
-      {
         conf.Path = Path.Combine(ApplicationPath, conf.Path[rootCurrent.Length..]);
-      }
 
       conf.MaxFileSize = int.Min(conf.MaxFileSize * 1024, 10 * 1_048_576);
       logger = new Logger(conf);
