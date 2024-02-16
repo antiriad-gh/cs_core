@@ -30,7 +30,7 @@ public ref struct SpanReader
   public int ReadUInt16()
   {
     this.Check();
-    var result = Bytes.ToInt(this.buffer, this.Index, this.le);
+    var result = Bytes.ToInt(this.buffer[this.Index..], this.le);
     this.Index += 2;
     return result;
   }

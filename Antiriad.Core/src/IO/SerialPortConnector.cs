@@ -52,16 +52,23 @@ public class SerialPortConnector : Connector
     if (parts.Length > 2) this.endPoint.DataBits = Typer.To<int>(parts[2]);
     if (parts.Length > 3)
     {
-      if (Enum.TryParse(parts[3], true, out Parity parity))
-        this.endPoint.Parity = parity;
-      else
-      {
-        if (parts[3] == "N") this.endPoint.Parity = Parity.None;
-        else if (parts[3] == "O") this.endPoint.Parity = Parity.Odd;
-        else if (parts[3] == "E") this.endPoint.Parity = Parity.Even;
-        else if (parts[3] == "M") this.endPoint.Parity = Parity.Mark;
-        else if (parts[3] == "S") this.endPoint.Parity = Parity.Space;
-      }
+            if (Enum.TryParse(parts[3], true, out Parity parity))
+            {
+                this.endPoint.Parity = parity;
+            }
+            else
+            {
+                if (parts[3] == "N")
+                    this.endPoint.Parity = Parity.None;
+                else if (parts[3] == "O")
+                    this.endPoint.Parity = Parity.Odd;
+                else if (parts[3] == "E")
+                    this.endPoint.Parity = Parity.Even;
+                else if (parts[3] == "M")
+                    this.endPoint.Parity = Parity.Mark;
+                else if (parts[3] == "S")
+                    this.endPoint.Parity = Parity.Space;
+            }
     }
     if (parts.Length > 4)
     {

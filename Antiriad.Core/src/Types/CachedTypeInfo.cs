@@ -33,7 +33,7 @@ public class CachedTypeInfo
       // attribute: CompilerGeneratedAttribute
       // name: <FieldName>k__BackingField
     }
-    catch (Exception ex)
+    catch (Exception)
     {
       //Trace.Exception(ex);
     }
@@ -43,7 +43,7 @@ public class CachedTypeInfo
       var list = type.GetProperties(BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.Instance | BindingFlags.Public);
       metap.AddRange(list.Where(i => i.CanWrite).OrderBy(i => i.Name).Select(i => new PropertyMetadata(this.Type, i)));
     }
-    catch (Exception ex)
+    catch (Exception)
     {
       //Trace.Exception(ex);
     }
@@ -83,13 +83,13 @@ public class CachedTypeInfo
     }
   }
 
-  public object NewInstance()
+  public object? NewInstance()
   {
     try
     {
       return this.Constructor();
     }
-    catch (Exception ex)
+    catch (Exception)
     {
       //Trace.Exception(ex);
     }
@@ -109,8 +109,8 @@ public class CachedTypeInfo
     }
   }
 
-  private static readonly Dictionary<string, HashPair> HashAliases = new Dictionary<string, HashPair>();
-  private static readonly object HashLock = new object();
+  private static readonly Dictionary<string, HashPair> HashAliases = new();
+  private static readonly object HashLock = new();
 
   /*public static void Register(Type type)
   {

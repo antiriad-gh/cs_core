@@ -32,8 +32,8 @@ public class ConnectorPeer : IConnectorDataEvents, IMethodBinderInterceptor
 
   private readonly List<WaitPacket> waits = new();
   private readonly NaibTypeInfoList cache = new();
-  private NaibSerializer enc;
-  private NaibDeserializer dec;
+  private NaibSerializer? enc;
+  private NaibDeserializer? dec;
   private int sequence;
 
   /// <summary>
@@ -58,7 +58,7 @@ public class ConnectorPeer : IConnectorDataEvents, IMethodBinderInterceptor
     this.Setup(client, backgroundProcessing, foreignBind);
   }
 
-  public void Setup(Connector client, bool backgroundProcessing = false, object foreignBind = null)
+  public void Setup(Connector client, bool backgroundProcessing = false, object? foreignBind = null)
   {
     this.client = client;
     this.client.Sizer = ConnectorPeer.GetSize;
@@ -66,7 +66,7 @@ public class ConnectorPeer : IConnectorDataEvents, IMethodBinderInterceptor
     this.binder.Bind(foreignBind ?? this, this);
   }
 
-  public void TransparentSetup(Connector client, bool backgroundProcessing = false, object foreignBind = null)
+  public void TransparentSetup(Connector client, bool backgroundProcessing = false, object? foreignBind = null)
   {
     this.client = client;
     this.client.Sizer = ConnectorPeer.GetSize;
@@ -79,7 +79,7 @@ public class ConnectorPeer : IConnectorDataEvents, IMethodBinderInterceptor
 
   public static int GetSize(ReadOnlySpan<byte> buffer)
   {
-    return buffer != null && buffer.Length >= ConnectorPeerPacket.HeaderSize ? Bytes.ToInt(buffer, ConnectorPeerPacket.HeaderSizePos) : -1;
+    return buffer != null && buffer.Length >= ConnectorPeerPacket.HeaderSize ? Bytes.ToInt(buffer[ConnectorPeerPacket.HeaderSizePos..]) : -1;
   }
 
   public bool Activate(bool reconnect)
@@ -319,7 +319,7 @@ public class ConnectorPeer : IConnectorDataEvents, IMethodBinderInterceptor
       this.Post(new ConnectorPeerPacket(packet.PacketId, packet.Sequence, answer, null, true));
   }
 
-  public T CreateCommandProxy<T>() where T : class
+  public T? CreateCommandProxy<T>() where T : class
   {
     var proxy = ProxyBuilder.BuildProxyType<T>(typeof(ConnectorPeer));
     return Activator.CreateInstance(proxy, this) as T;

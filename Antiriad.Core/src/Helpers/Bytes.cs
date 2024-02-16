@@ -1,5 +1,6 @@
 ﻿using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Text;
 using Antiriad.Core.Collections;
 
 namespace Antiriad.Core.Helpers;
@@ -17,11 +18,11 @@ public static class Bytes
   /// <param name="le">LittleEndian (default for Intel)</param>
   /// <returns></returns>
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  public static short ToShort(ReadOnlySpan<byte> value, int index = 0, bool le = true)
+  public static short ToShort(ReadOnlySpan<byte> value, bool le = true)
   {
     return le
-      ? (short)(value[index + 0] | (value[index + 1] << 8))
-      : (short)(value[index + 1] | (value[index + 0] << 8));
+      ? (short)(value[0] | (value[1] << 8))
+      : (short)(value[1] | (value[0] << 8));
   }
 
   /// <summary>
@@ -32,11 +33,11 @@ public static class Bytes
   /// <param name="le">LittleEndian (default for Intel)</param>
   /// <returns></returns>
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  public static int ToInt(ReadOnlySpan<byte> value, int index = 0, bool le = true)
+  public static int ToInt(ReadOnlySpan<byte> value, bool le = true)
   {
     return le
-      ? value[index + 0] | (value[index + 1] << 8) | (value[index + 2] << 16) | (value[index + 3] << 24)
-      : value[index + 3] | (value[index + 2] << 8) | (value[index + 1] << 16) | (value[index + 0] << 24);
+      ? value[0] | (value[1] << 8) | (value[2] << 16) | (value[3] << 24)
+      : value[3] | (value[2] << 8) | (value[1] << 16) | (value[0] << 24);
   }
 
   /// <summary>
@@ -47,18 +48,18 @@ public static class Bytes
   /// <param name="le">LittleEndian (default for Intel)</param>
   /// <returns></returns>
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  public static long ToLong(ReadOnlySpan<byte> value, int index = 0, bool le = true)
+  public static long ToLong(ReadOnlySpan<byte> value, bool le = true)
   {
     if (le)
     {
-      var i1 = value[index + 0] | (value[index + 1] << 8) | (value[index + 2] << 16) | (value[index + 3] << 24);
-      var i2 = value[index + 4] | (value[index + 5] << 8) | (value[index + 6] << 16) | (value[index + 7] << 24);
+      var i1 = value[0] | (value[1] << 8) | (value[2] << 16) | (value[3] << 24);
+      var i2 = value[4] | (value[5] << 8) | (value[6] << 16) | (value[7] << 24);
       return (uint)i1 | ((long)i2 << 32);
     }
     else
     {
-      var i1 = value[index + 3] | (value[index + 2] << 8) | (value[index + 1] << 16) | (value[index + 0] << 24);
-      var i2 = value[index + 7] | (value[index + 6] << 8) | (value[index + 5] << 16) | (value[index + 4] << 24);
+      var i1 = value[3] | (value[2] << 8) | (value[1] << 16) | (value[0] << 24);
+      var i2 = value[7] | (value[6] << 8) | (value[5] << 16) | (value[4] << 24);
       return (uint)i1 | ((long)i2 << 32);
     }
   }
@@ -71,9 +72,9 @@ public static class Bytes
   /// <param name="le">LittleEndian (default for Intel)</param>
   /// <returns></returns>
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  public static ushort ToUShort(ReadOnlySpan<byte> value, int index = 0, bool le = true)
+  public static ushort ToUShort(ReadOnlySpan<byte> value, bool le = true)
   {
-    return (ushort)ToShort(value, index, le);
+    return (ushort)ToShort(value, le);
   }
 
   /// <summary>
@@ -84,9 +85,9 @@ public static class Bytes
   /// <param name="le">LittleEndian (default for Intel)</param>
   /// <returns></returns>
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  public static uint ToUInt(ReadOnlySpan<byte> value, int index = 0, bool le = true)
+  public static uint ToUInt(ReadOnlySpan<byte> value, bool le = true)
   {
-    return (uint)ToInt(value, index, le);
+    return (uint)ToInt(value, le);
   }
 
   /// <summary>
@@ -97,9 +98,9 @@ public static class Bytes
   /// <param name="le">LittleEndian (default for Intel)</param>
   /// <returns></returns>
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  public static ulong ToULong(ReadOnlySpan<byte> value, int index = 0, bool le = true)
+  public static ulong ToULong(ReadOnlySpan<byte> value, bool le = true)
   {
-    return (ulong)ToLong(value, index, le);
+    return (ulong)ToLong(value, le);
   }
 
   [StructLayout(LayoutKind.Explicit)]
@@ -130,9 +131,9 @@ public static class Bytes
   /// <param name="le">LittleEndian (default for Intel)</param>
   /// <returns></returns>
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  public static float ToFloat(ReadOnlySpan<byte> value, int index, bool le = true)
+  public static float ToFloat(ReadOnlySpan<byte> value, bool le = true)
   {
-    return new FloatConverter { IntegerValue = ToInt(value, index, le) }.FloatValue;
+    return new FloatConverter { IntegerValue = ToInt(value, le) }.FloatValue;
   }
 
   /// <summary>
@@ -143,9 +144,9 @@ public static class Bytes
   /// <param name="le">LittleEndian (default for Intel)</param>
   /// <returns></returns>
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  public static double ToDouble(ReadOnlySpan<byte> value, int index, bool le = true)
+  public static double ToDouble(ReadOnlySpan<byte> value, bool le = true)
   {
-    return new DoubleConverter { LongValue = ToLong(value, index, le) }.DoubleValue;
+    return new DoubleConverter { LongValue = ToLong(value, le) }.DoubleValue;
   }
 
   /// <summary>
@@ -158,34 +159,33 @@ public static class Bytes
   /// <param name="le">LittleEndian (default for Intel)</param>
   /// <returns></returns>
   [Obsolete("use ToObject()")]
-  public static object? ToNumber(Type vtype, int arrayLength, ReadOnlySpan<byte> buffer, int index = 0, bool le = true)
+  public static object? ToNumber(Type vtype, int arrayLength, ReadOnlySpan<byte> buffer, bool le = true)
   {
-    return ToObject(vtype, arrayLength, buffer, index, le);
+    return ToObject(vtype, arrayLength, buffer, le);
   }
 
-  /// <summary>
-  /// Obtains a <code>vtype</code> value from byte array
-  /// </summary>
-  /// <param name="vtype">Type for desired return value</param>
-  /// <param name="arrayLength">Array length</param>
-  /// <param name="buffer">Array of bytes</param>
-  /// <param name="index">Offset to start reading</param>
-  /// <param name="le">LittleEndian (default for Intel)</param>
-  /// <returns></returns>
-  public static object? ToObject(Type vtype, int arrayLength, ReadOnlySpan<byte> buffer, int index = 0, bool le = true)
-  {
-    var aa = ArrayAccessor.For(vtype);
-    if (!vtype.IsArray) return aa.GetValueFromBytes!(buffer, index, le);
-    return aa.FromBytes(buffer, index, arrayLength, le);
-  }
+    /// <summary>
+    /// Obtains a <code>vtype</code> value from byte array
+    /// </summary>
+    /// <param name="vtype">Type for desired return value</param>
+    /// <param name="arrayLength">Array length</param>
+    /// <param name="buffer">Array of bytes</param>
+    /// <param name="index">Offset to start reading</param>
+    /// <param name="le">LittleEndian (default for Intel)</param>
+    /// <returns></returns>
+    public static object? ToObject(Type vtype, int arrayLength, ReadOnlySpan<byte> buffer, bool le = true)
+    {
+        var aa = ArrayAccessor.For(vtype);
+        return !vtype.IsArray ? aa.GetValueFromBytes!(buffer, 0, le) : aa.FromBytes(buffer, 0, arrayLength, le);
+    }
 
-  /// <summary>
-  /// Obtains a byte array from unsigned int16 value
-  /// </summary>
-  /// <param name="value">The number to convert to byte array</param>
-  /// <param name="le">LittleEndian (default for Intel)</param>
-  /// <returns></returns>
-  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    /// <summary>
+    /// Obtains a byte array from unsigned int16 value
+    /// </summary>
+    /// <param name="value">The number to convert to byte array</param>
+    /// <param name="le">LittleEndian (default for Intel)</param>
+    /// <returns></returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
   public static byte[] FromUShort(ushort value, bool le = true)
   {
     return FromShort((short)value, le);
@@ -201,7 +201,7 @@ public static class Bytes
   public static byte[] FromShort(short value, bool le = true)
   {
     var buffer = new byte[2];
-    FromShort(value, buffer, 0, le);
+    FromShort(value, buffer, le);
     return buffer;
   }
 
@@ -227,7 +227,7 @@ public static class Bytes
   public static byte[] FromInt(int value, bool le = true)
   {
     var buffer = new byte[4];
-    FromInt(value, buffer, 0, le);
+    FromInt(value, buffer, le);
     return buffer;
   }
 
@@ -253,7 +253,7 @@ public static class Bytes
   public static byte[] FromLong(long value, bool le = true)
   {
     var buffer = new byte[8];
-    FromLong(value, buffer, 0, le);
+    FromLong(value, buffer, le);
     return buffer;
   }
 
@@ -266,17 +266,17 @@ public static class Bytes
   /// <param name="le">LittleEndian (default for Intel)</param>
   /// <returns>Count of bytes written</returns>
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  public static int FromShort(short value, Span<byte> buffer, int index = 0, bool le = true)
+  public static int FromShort(short value, Span<byte> buffer, bool le = true)
   {
     if (le)
     {
-      buffer[index + 0] = (byte)(value & 0xff);
-      buffer[index + 1] = (byte)((value >> 8) & 0xff);
+      buffer[0] = (byte)(value & 0xff);
+      buffer[1] = (byte)((value >> 8) & 0xff);
     }
     else
     {
-      buffer[index + 1] = (byte)(value & 0xff);
-      buffer[index + 0] = (byte)((value >> 8) & 0xff);
+      buffer[1] = (byte)(value & 0xff);
+      buffer[0] = (byte)((value >> 8) & 0xff);
     }
     return 2;
   }
@@ -290,21 +290,21 @@ public static class Bytes
   /// <param name="le">LittleEndian (default for Intel)</param>
   /// <returns>Count of bytes written</returns>
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  public static int FromInt(int value, Span<byte> buffer, int index = 0, bool le = true)
+  public static int FromInt(int value, Span<byte> buffer, bool le = true)
   {
     if (le)
     {
-      buffer[index + 0] = (byte)(value & 0xff);
-      buffer[index + 1] = (byte)((value >> 8) & 0xff);
-      buffer[index + 2] = (byte)((value >> 16) & 0xff);
-      buffer[index + 3] = (byte)((value >> 24) & 0xff);
+      buffer[0] = (byte)(value & 0xff);
+      buffer[1] = (byte)((value >> 8) & 0xff);
+      buffer[2] = (byte)((value >> 16) & 0xff);
+      buffer[3] = (byte)((value >> 24) & 0xff);
     }
     else
     {
-      buffer[index + 3] = (byte)(value & 0xff);
-      buffer[index + 2] = (byte)((value >> 8) & 0xff);
-      buffer[index + 1] = (byte)((value >> 16) & 0xff);
-      buffer[index + 0] = (byte)((value >> 24) & 0xff);
+      buffer[3] = (byte)(value & 0xff);
+      buffer[2] = (byte)((value >> 8) & 0xff);
+      buffer[1] = (byte)((value >> 16) & 0xff);
+      buffer[0] = (byte)((value >> 24) & 0xff);
     }
     return 4;
   }
@@ -318,9 +318,9 @@ public static class Bytes
   /// <param name="le">LittleEndian (default for Intel)</param>
   /// <returns>Count of bytes written</returns>
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  public static int FromULong(ulong value, Span<byte> buffer, int index = 0, bool le = true)
+  public static int FromULong(ulong value, Span<byte> buffer, bool le = true)
   {
-    return FromLong((long)value, buffer, index, le);
+    return FromLong((long)value, buffer, le);
   }
 
   /// <summary>
@@ -332,29 +332,29 @@ public static class Bytes
   /// <param name="le">LittleEndian (default for Intel)</param>
   /// <returns>Count of bytes written</returns>
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  public static int FromLong(long value, Span<byte> buffer, int index = 0, bool le = true)
+  public static int FromLong(long value, Span<byte> buffer, bool le = true)
   {
     if (le)
     {
-      buffer[index + 0] = (byte)(value & 0xff);
-      buffer[index + 1] = (byte)((value >> 8) & 0xff);
-      buffer[index + 2] = (byte)((value >> 16) & 0xff);
-      buffer[index + 3] = (byte)((value >> 24) & 0xff);
-      buffer[index + 4] = (byte)((value >> 32) & 0xff);
-      buffer[index + 5] = (byte)((value >> 40) & 0xff);
-      buffer[index + 6] = (byte)((value >> 48) & 0xff);
-      buffer[index + 7] = (byte)((value >> 56) & 0xff);
+      buffer[0] = (byte)(value & 0xff);
+      buffer[1] = (byte)((value >> 8) & 0xff);
+      buffer[2] = (byte)((value >> 16) & 0xff);
+      buffer[3] = (byte)((value >> 24) & 0xff);
+      buffer[4] = (byte)((value >> 32) & 0xff);
+      buffer[5] = (byte)((value >> 40) & 0xff);
+      buffer[6] = (byte)((value >> 48) & 0xff);
+      buffer[7] = (byte)((value >> 56) & 0xff);
     }
     else
     {
-      buffer[index + 7] = (byte)(value & 0xff);
-      buffer[index + 6] = (byte)((value >> 8) & 0xff);
-      buffer[index + 5] = (byte)((value >> 16) & 0xff);
-      buffer[index + 4] = (byte)((value >> 24) & 0xff);
-      buffer[index + 3] = (byte)((value >> 32) & 0xff);
-      buffer[index + 2] = (byte)((value >> 40) & 0xff);
-      buffer[index + 1] = (byte)((value >> 48) & 0xff);
-      buffer[index + 0] = (byte)((value >> 56) & 0xff);
+      buffer[7] = (byte)(value & 0xff);
+      buffer[6] = (byte)((value >> 8) & 0xff);
+      buffer[5] = (byte)((value >> 16) & 0xff);
+      buffer[4] = (byte)((value >> 24) & 0xff);
+      buffer[3] = (byte)((value >> 32) & 0xff);
+      buffer[2] = (byte)((value >> 40) & 0xff);
+      buffer[1] = (byte)((value >> 48) & 0xff);
+      buffer[0] = (byte)((value >> 56) & 0xff);
     }
     return 8;
   }
@@ -368,9 +368,9 @@ public static class Bytes
   /// <param name="le">LittleEndian (default for Intel)</param>
   /// <returns>Count of bytes written</returns>
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  public static int FromUShort(ushort value, Span<byte> buffer, int index = 0, bool le = true)
+  public static int FromUShort(ushort value, Span<byte> buffer, bool le = true)
   {
-    return FromShort((short)value, buffer, index, le);
+    return FromShort((short)value, buffer, le);
   }
 
   /// <summary>
@@ -382,9 +382,9 @@ public static class Bytes
   /// <param name="le">LittleEndian (default for Intel)</param>
   /// <returns>Count of bytes written</returns>
   [MethodImpl(MethodImplOptions.AggressiveInlining)]
-  public static int FromUInt(uint value, Span<byte> buffer, int index = 0, bool le = true)
+  public static int FromUInt(uint value, Span<byte> buffer, bool le = true)
   {
-    return FromInt((int)value, buffer, index, le);
+    return FromInt((int)value, buffer, le);
   }
 
   /// <summary>
@@ -396,7 +396,7 @@ public static class Bytes
   public static byte[] FromFloat(float value, bool le = true)
   {
     var buffer = new byte[4];
-    FromFloat(value, buffer, 0, le);
+    FromFloat(value, buffer, le);
     return buffer;
   }
 
@@ -408,9 +408,9 @@ public static class Bytes
   /// <param name="index">Offset to start writing</param>
   /// <param name="le">LittleEndian (default for Intel)</param>
   /// <returns>Count of bytes written</returns>
-  public static int FromFloat(float value, byte[] buffer, int index, bool le = true)
+  public static int FromFloat(float value, Span<byte> buffer, bool le = true)
   {
-    return FromInt(new FloatConverter { FloatValue = value }.IntegerValue, buffer, index, le);
+    return FromInt(new FloatConverter { FloatValue = value }.IntegerValue, buffer, le);
   }
 
   /// <summary>
@@ -422,7 +422,7 @@ public static class Bytes
   public static byte[] FromDouble(double value, bool le = true)
   {
     var buffer = new byte[8];
-    FromDouble(value, buffer, 0, le);
+    FromDouble(value, buffer, le);
     return buffer;
   }
 
@@ -434,9 +434,9 @@ public static class Bytes
   /// <param name="index">Offset to start writing</param>
   /// <param name="le">LittleEndian (default for Intel)</param>
   /// <returns>Count of bytes written</returns>
-  public static int FromDouble(double value, byte[] buffer, int index, bool le = true)
+  public static int FromDouble(double value, Span<byte> buffer, bool le = true)
   {
-    return FromLong(new DoubleConverter { DoubleValue = value }.LongValue, buffer, index, le);
+    return FromLong(new DoubleConverter { DoubleValue = value }.LongValue, buffer, le);
   }
 
   /// <summary>
@@ -495,99 +495,130 @@ public static class Bytes
     return 1;
   }
 
-  /// <summary>
-  /// Gets Array of bytes from a number or Array of numbers
-  /// </summary>
-  /// <param name="value">A number or Array of numbers</param>
-  /// <param name="le">LittleEndian (default for Intel)</param>
-  /// <returns>Byte array containing the value</returns>
-  public static byte[] FromObject(object value, bool le = true)
-  {
-    var vtype = value.GetType();
-    var aa = ArrayAccessor.For(vtype);
-    if (vtype.IsArray) return aa.ToBytes((Array)value, le);
-    var dst = new byte[aa.ElementSize];
-    aa.GetBytesFromValue!(Typer.Cast(vtype, value), dst, 0, le);
-    return dst;
-  }
-
-  public static int FromObject(object value, Span<byte> buffer, int index = 0, bool le = true)
-  {
-    var vtype = value.GetType();
-    var aa = ArrayAccessor.For(vtype);
-    if (vtype.IsArray) return aa.ToBytes((Array)value, 0, aa.GetLength(value), buffer, index, le);
-    return aa.GetBytesFromValue!(Typer.Cast(vtype, value), buffer, index, le);
-  }
-
-  /// <summary>
-  /// Gets Array of bytes from a number or Array of numbers
-  /// </summary>
-  /// <param name="vtype">Type of data</param>
-  /// <param name="value">Value to convert</param>
-  /// <param name="buffer">Array of byte to hold the value</param>
-  /// <param name="index">Destination Array offset</param>
-  /// <param name="le">LittleEndian (default for Intel)</param>
-  /// <returns></returns>
-  public static int FromObject(Type vtype, object value, Span<byte> buffer, int index = 0, bool le = true)
-  {
-    var aa = ArrayAccessor.For(vtype);
-    if (vtype.IsArray) return aa.ToBytes((Array)value, 0, aa.GetLength(value), buffer, index, le);
-    return aa.GetBytesFromValue!(Typer.Cast(vtype, value), buffer, index, le);
-  }
-
-  /// <summary>
-  /// Receives a byte array and produces an hexadecimal string
-  /// </summary>
-  /// <param name="value">Byte array value</param>
-  /// <returns>String with hexadecimal value</returns>
-  public static string ToHex(ReadOnlySpan<byte> value)
-  {
-    if (value == null)
-      return string.Empty;
-
-    const string hexDigits = @"0123456789ABCDEF";
-    Span<char> chars = new char[checked(value.Length * 2)];
-
-    unchecked
+    /// <summary>
+    /// Gets Array of bytes from a number or Array of numbers
+    /// </summary>
+    /// <param name="value">A number or Array of numbers</param>
+    /// <param name="le">LittleEndian (default for Intel)</param>
+    /// <returns>Byte array containing the value</returns>
+    public static byte[] FromObject(object value, bool le = true)
     {
-      for (var i = 0; i < value.Length; i++)
-      {
-        chars[i * 2] = hexDigits[value[i] >> 4];
-        chars[i * 2 + 1] = hexDigits[value[i] & 0xf];
-      }
+        var vtype = value.GetType();
+        var aa = ArrayAccessor.For(vtype);
+        if (vtype.IsArray)
+            return aa.ToBytes((Array)value, le);
+        var dst = new byte[aa.ElementSize];
+        aa.GetBytesFromValue!(Typer.Cast(vtype, value)!, dst, 0, le);
+        return dst;
     }
-    return new string(chars);
-  }
 
-  /// <summary>
-  /// Receives string with hexadecimal value and returns byte array
-  /// </summary>
-  /// <param name="value">String containing hexadecimal</param>
-  /// <returns>Byte array</returns>
-  public static byte[] FromHex(string value)
-  {
-    return FromHex(value, 0, value.Length);
-  }
+    public static int FromObject(object value, Span<byte> buffer, bool le = true)
+    {
+        var vtype = value.GetType();
+        var aa = ArrayAccessor.For(vtype);
+        return vtype.IsArray ? aa.ToBytes((Array)value, 0, aa.GetLength(value), buffer, 0, le) : aa.GetBytesFromValue!(Typer.Cast(vtype, value)!, buffer, 0, le);
+    }
 
-  public static byte[] FromHex(string value, int index, int count)
+    /// <summary>
+    /// Gets Array of bytes from a number or Array of numbers
+    /// </summary>
+    /// <param name="vtype">Type of data</param>
+    /// <param name="value">Value to convert</param>
+    /// <param name="buffer">Array of byte to hold the value</param>
+    /// <param name="index">Destination Array offset</param>
+    /// <param name="le">LittleEndian (default for Intel)</param>
+    /// <returns></returns>
+    public static int FromObject(Type vtype, object value, Span<byte> buffer, bool le = true)
+    {
+        var aa = ArrayAccessor.For(vtype);
+        return vtype.IsArray ? aa.ToBytes((Array)value, 0, aa.GetLength(value), buffer, 0, le) : aa.GetBytesFromValue!(Typer.Cast(vtype, value)!, buffer, 0, le);
+    }
+
+    /// <summary>
+    /// Receives a byte array and produces an hexadecimal string
+    /// </summary>
+    /// <param name="value">Byte array value</param>
+    /// <returns>String with hexadecimal value</returns>
+    public static string ToHex(ReadOnlySpan<byte> value)
+    {
+        if (value == null)
+            return string.Empty;
+
+        const string hexDigits = @"0123456789ABCDEF";
+        Span<char> chars = stackalloc char[checked(value.Length * 2)];
+
+        unchecked
+        {
+            for (var i = 0; i < value.Length; i++)
+            {
+                chars[i * 2] = hexDigits[value[i] >> 4];
+                chars[i * 2 + 1] = hexDigits[value[i] & 0xf];
+            }
+        }
+
+        return new string(chars);
+    }
+
+    /// <summary>
+    /// Receives string with hexadecimal value and returns byte array
+    /// </summary>
+    /// <param name="value">String containing hexadecimal</param>
+    /// <param name="encoding">defaults to UTF8</param>
+    /// <returns>Byte array</returns>
+    public static ReadOnlySpan<byte> FromHex(string value, Encoding? encoding)
+    {
+        return FromHex((encoding ?? Encoding.UTF8).GetBytes(value));
+    }
+
+    public static int HexToInt(ReadOnlySpan<byte> value)
+    {
+        return ToInt(FromHex(value), false);
+    }
+
+    public static uint HexToUInt(ReadOnlySpan<byte> value)
+    {
+        return ToUInt(FromHex(value), false);
+    }
+
+    public static short HexToShort(ReadOnlySpan<byte> value)
+    {
+        return ToShort(FromHex(value), false);
+    }
+
+    public static ushort HexToUShort(ReadOnlySpan<byte> value)
+    {
+        return ToUShort(FromHex(value), false);
+    }
+
+    public static long HexToLong(ReadOnlySpan<byte> value)
+    {
+        return ToLong(FromHex(value), false);
+    }
+
+    public static ulong HexToULong(ReadOnlySpan<byte> value)
+    {
+        return ToULong(FromHex(value), false);
+    }
+
+  public static ReadOnlySpan<byte> FromHex(ReadOnlySpan<byte> value)
   {
-    if (value == null)
+    if (value == null || value.IsEmpty)
       return Array.Empty<byte>();
 
     unchecked
     {
-      var result = new byte[count / 2];
+      var result = new byte[value.Length / 2];
 
       for (var i = 0; i < result.Length; i++)
       {
-        int b = value[index + i * 2]; // High 4 bits
+        int b = value[i * 2]; // High 4 bits
 
         if (b > 'Z')
           b -= 32;
 
         var val = (b - '0' + ((('9' - b) >> 31) & -7)) << 4;
 
-        b = value[index + i * 2 + 1]; // Low 4 bits
+        b = value[i * 2 + 1]; // Low 4 bits
 
         if (b > 'Z')
           b -= 32;

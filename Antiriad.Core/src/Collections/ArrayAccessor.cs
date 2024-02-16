@@ -11,7 +11,7 @@ using Antiriad.Core.Helpers;
 public abstract class ArrayAccessor
 {
   public delegate object GetFromBytesDelegate(ReadOnlySpan<byte> array, int index, bool le);
-  public delegate int GetBytesFromDelegate(object? value, Span<byte> buffer, int index, bool le = true);
+  public delegate int GetBytesFromDelegate(object value, Span<byte> buffer, int index, bool le = true);
 
   /// <summary>
   /// Common interface for ArrayAccessor
@@ -245,32 +245,32 @@ public abstract class ArrayAccessor
 
   public static ArrayAccessor ForInt()
   {
-    return intaa ??= new Accessor<int>(sizeof(int), (a, i, l) => Bytes.ToInt(a, i, l), (v, a, i, l) => Bytes.FromInt((int)v, a, i, l));
+    return intaa ??= new Accessor<int>(sizeof(int), (a, i, l) => Bytes.ToInt(a[i..], l), (v, a, i, l) => Bytes.FromInt((int)v, a[i..], l));
   }
 
   public static ArrayAccessor ForUInt()
   {
-    return uintaa ??= new Accessor<uint>(sizeof(uint), (a, i, l) => Bytes.ToUInt(a, i, l), (v, a, i, l) => Bytes.FromUInt((uint)v, a, i, l));
+    return uintaa ??= new Accessor<uint>(sizeof(uint), (a, i, l) => Bytes.ToUInt(a[i..], l), (v, a, i, l) => Bytes.FromUInt((uint)v, a[i..], l));
   }
 
   public static ArrayAccessor ForLong()
   {
-    return longaa ??= new Accessor<long>(sizeof(long), (a, i, l) => Bytes.ToLong(a, i, l), (v, a, i, l) => Bytes.FromLong((long)v, a, i, l));
+    return longaa ??= new Accessor<long>(sizeof(long), (a, i, l) => Bytes.ToLong(a[i..], l), (v, a, i, l) => Bytes.FromLong((long)v, a[i..], l));
   }
 
   public static ArrayAccessor ForULong()
   {
-    return ulongaa ??= new Accessor<ulong>(sizeof(ulong), (a, i, l) => Bytes.ToULong(a, i, l), (v, a, i, l) => Bytes.FromULong((ulong)v, a, i, l));
+    return ulongaa ??= new Accessor<ulong>(sizeof(ulong), (a, i, l) => Bytes.ToULong(a[i..], l), (v, a, i, l) => Bytes.FromULong((ulong)v, a[i..], l));
   }
 
   public static ArrayAccessor ForShort()
   {
-    return shortaa ??= new Accessor<short>(sizeof(short), (a, i, l) => Bytes.ToShort(a, i, l), (v, a, i, l) => Bytes.FromShort((short)v, a, i, l));
+    return shortaa ??= new Accessor<short>(sizeof(short), (a, i, l) => Bytes.ToShort(a[i..], l), (v, a, i, l) => Bytes.FromShort((short)v, a[i..], l));
   }
 
   public static ArrayAccessor ForUShort()
   {
-    return ushortaa ??= new Accessor<ushort>(sizeof(ushort), (a, i, l) => Bytes.ToUShort(a, i, l), (v, a, i, l) => Bytes.FromUShort((ushort)v, a, i, l));
+    return ushortaa ??= new Accessor<ushort>(sizeof(ushort), (a, i, l) => Bytes.ToUShort(a[i..], l), (v, a, i, l) => Bytes.FromUShort((ushort)v, a[i..], l));
   }
 
   public static ArrayAccessor ForString()

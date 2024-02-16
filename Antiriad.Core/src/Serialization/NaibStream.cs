@@ -337,7 +337,7 @@ public class NaibStream
     return BitConverter.ToDouble(buffer, 0);
   }
 
-  public string ReadString(int length)
+  public string? ReadString(int length)
   {
     if (length <= 0) return null;
     var buffer = new byte[length];
@@ -354,7 +354,7 @@ public class NaibStream
   {
     var buffer = new byte[8];
     this.BaseStream.Read(buffer, 0, buffer.Length);
-    return Bytes.ToLong(buffer, 0, true);
+    return Bytes.ToLong(buffer, true);
   }
 
   public float ReadSingle()

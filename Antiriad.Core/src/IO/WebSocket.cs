@@ -15,7 +15,7 @@ public class WebSocket : SocketConnector, IConnectorDataEvents
   private int bufferIndex;
   private byte[] bufferMask;
   private bool started;
-  private IConnectorDataEvents remoteListener;
+  private IConnectorDataEvents? remoteListener;
 
   private int GetSize(ReadOnlySpan<byte> buffer)
   {
@@ -30,7 +30,7 @@ public class WebSocket : SocketConnector, IConnectorDataEvents
       this.bufferIndex = indexMask + 4;
       this.bufferMask = buffer[indexMask..(indexMask + 4)].ToArray();
 
-      var realLength = indexMask == 4 ? Bytes.ToUShort(buffer, 2, false) : indexMask == 10 ? (int)Bytes.ToULong(buffer, 2, false) : dataLength;
+      var realLength = indexMask == 4 ? Bytes.ToUShort(buffer[2..], false) : indexMask == 10 ? (int)Bytes.ToULong(buffer[2..], false) : dataLength;
       return realLength + this.bufferIndex;
     }
 
@@ -145,13 +145,13 @@ public class WebSocket : SocketConnector, IConnectorDataEvents
     else if (size >= 126 && size <= 0xffff)
     {
       frame[1] = 126;
-      Bytes.FromUShort((ushort)size, frame, 2, false);
+      Bytes.FromUShort((ushort)size, frame[2..], false);
       indexStartRawData = 4;
     }
     else
     {
       frame[1] = 127;
-      Bytes.FromULong((ulong)size, frame, 2, false);
+      Bytes.FromULong((ulong)size, frame[2..], false);
       indexStartRawData = 10;
     }
 

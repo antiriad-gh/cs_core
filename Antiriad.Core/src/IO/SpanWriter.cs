@@ -30,7 +30,7 @@ public ref struct SpanWriter
   public void WriteUInt16(ushort value)
   {
     this.Check();
-    Bytes.FromUShort(value, this.buffer, this.Index, this.le);
+    Bytes.FromUShort(value, this.buffer[this.Index..], this.le);
     this.Index += 2;
   }
 }
