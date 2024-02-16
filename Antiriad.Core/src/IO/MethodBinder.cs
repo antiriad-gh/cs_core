@@ -10,11 +10,11 @@ namespace Antiriad.Core.IO;
 
 public class MethodBinder
 {
-  internal delegate void PostDelegate(object obj, object arg);
-  internal delegate void SendDelegate(object obj, object arg, object answer);
+  internal delegate void PostDelegate(object obj, object? arg);
+  internal delegate void SendDelegate(object obj, object? arg, object? answer);
 
-  internal delegate void ProcDelegate(object obj, object[] args);
-  internal delegate object FuncDelegate(object obj, object[] args);
+  internal delegate void ProcDelegate(object obj, object[]? args);
+  internal delegate object FuncDelegate(object obj, object[]? args);
 
   internal class MethodCall
   {
@@ -156,7 +156,7 @@ public class MethodBinder
         }
         else
         {
-          methodName = pars[0].ParameterType.FullName;
+          methodName = pars[0].ParameterType.FullName ?? string.Empty;
           methodId = attr[0].HashSource switch
           {
             HashSource.FirstParameter => NaibStream.CalculateHash(methodName),
@@ -234,19 +234,22 @@ public class MethodBinder
     {
       var payload = this.binderInterceptor?.BeforeInvoke(info.Id, data) ?? data;
 
-      if (info.AnswerType == null)
+      if (this.handler != null)
       {
-        if (info.Invoker is ProcDelegate proc)
-          proc(this.handler, Typer.To<object[]>(payload));
-        else if (info.Invoker is PostDelegate post)
-          post(this.handler, payload);
-      }
-      else
-      {
-        if (info.Invoker is FuncDelegate func)
-          answer = func(this.handler, Typer.To<object[]>(payload));
-        else if (info.Invoker is SendDelegate send)
-          send(this.handler, payload, answer = Activator.CreateInstance(info.AnswerType)!);
+        if (info.AnswerType == null)
+        {
+          if (info.Invoker is ProcDelegate proc)
+            proc(this.handler, Typer.To<object[]>(payload));
+          else if (info.Invoker is PostDelegate post)
+            post(this.handler, payload);
+        }
+        else
+        {
+          if (info.Invoker is FuncDelegate func)
+            answer = func(this.handler, Typer.To<object[]>(payload));
+          else if (info.Invoker is SendDelegate send)
+            send(this.handler, payload, answer = Activator.CreateInstance(info.AnswerType)!);
+        }
       }
     }
     catch (Exception ex)
@@ -268,6 +271,6 @@ public class MethodBinder
   public string GetPacketName(int id)
   {
     var info = this.methods.Find(i => i.Id == id);
-    return info?.Info.Name ?? "not found";
+    return info?.Info?.Name ?? "not found";
   }
 }

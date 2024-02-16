@@ -26,7 +26,8 @@ public static class IPTool
           return unicastAddr.IPv4Mask;
       }
     }
-    return null;
+
+    return IPAddress.None;
   }
 
   public static IPAddress GetBroadcastAddress(this IPAddress address, IPAddress subnetMask)
