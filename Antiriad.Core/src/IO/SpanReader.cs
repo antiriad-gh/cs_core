@@ -38,7 +38,7 @@ public ref struct SpanReader
   public ushort ReadUShort()
   {
     this.Check(2);
-    var result = Bytes.ToInt(this.buffer[this.Index..], this.le);
+    var result = Bytes.ToUShort(this.buffer[this.Index..], this.le);
     this.Index += 2;
     return result;
   }
