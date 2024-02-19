@@ -45,7 +45,7 @@ public class NaibSerializer
       this.Write(Typer.TypeObject, data);
   }
 
-  private void Write(Type type, object data)
+  private void Write(Type? type, object? data)
   {
     if (this.stream == null)
       throw new Exception("stream not assigned");
@@ -99,7 +99,7 @@ public class NaibSerializer
     if (isnew)
     {
       if (needId) this.cache.GetId(info);
-      this.stream.WriteShort((short)(info.LocalId | NaibStream.NewObjectMask)); // typeid with typedef
+      this.stream!.WriteShort((short)(info.LocalId | NaibStream.NewObjectMask)); // typeid with typedef
       this.stream.WriteString(info.Name); // typename
       this.stream.WriteSize(info.Props.Length);
     }
@@ -109,13 +109,13 @@ public class NaibSerializer
 
       if (index >= 0) // repeated instance
       {
-        this.stream.WriteShort((short)(info.LocalId | NaibStream.NewObjectMask)); // typeid with typedef
+        this.stream!.WriteShort((short)(info.LocalId | NaibStream.NewObjectMask)); // typeid with typedef
         this.stream.WriteString(null);
         this.stream.WriteShort((short)index);
         return;
       }
 
-      this.stream.WriteShort(info.LocalId); // typeid only
+      this.stream!.WriteShort(info.LocalId); // typeid only
     }
 
     this.objects.Add(data);
@@ -158,13 +158,13 @@ public class NaibSerializer
     }
   }
 
-  private void WriteArray(Type type, object data)
+  private void WriteArray(Type? type, object? data)
   {
     var count = CollectionHelper.GetCount(data);
 
-    this.stream.WriteSize(count);
+    this.stream!.WriteSize(count);
 
-    if (count == 0)
+    if (count == 0 || type == null || data == null)
       return;
 
     if (type.IsArray)
@@ -185,7 +185,7 @@ public class NaibSerializer
     else if (type == Typer.TypeDateTime) this.stream.WriteDateTimeArray(data);
     else if (type == Typer.TypeDateTimeOffset) this.stream.WriteBiasedDateTimeArray(data);
     else if (type == Typer.TypeGuid) this.stream.WriteGuidArray(data);
-    else if (type.IsEnum) this.stream.WriteEnumArray(data);
+    else if (type!.IsEnum) this.stream.WriteEnumArray(data);
     else
     {
       if (data is Array)

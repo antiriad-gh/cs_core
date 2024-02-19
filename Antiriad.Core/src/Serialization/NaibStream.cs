@@ -128,11 +128,11 @@ public class NaibStream
     if (createArray)
     {
       var b = new string[count];
-      for (var i = 0; i < count; i++) b[i] = this.ReadString();
+      for (var i = 0; i < count; i++) b[i] = this.ReadString()!;
       return b;
     }
     var list = new List<string>(count);
-    for (var i = 0; i < count; i++) list.Add(this.ReadString());
+    for (var i = 0; i < count; i++) list.Add(this.ReadString()!);
     return list;
   }
 
@@ -345,7 +345,7 @@ public class NaibStream
     return ByteCoder.GetString(buffer, 0, buffer.Length);
   }
 
-  public string ReadString()
+  public string? ReadString()
   {
     return this.ReadString(this.ReadSize());
   }
@@ -378,8 +378,9 @@ public class NaibStream
     return BitConverter.ToInt16(buffer, 0);
   }
 
-  public object? ReadValue(Type type)
+  public object? ReadValue(Type? type)
   {
+    if (type == null) return null;
     if (type == Typer.TypeByte) return this.ReadByte();
     if (type == Typer.TypeBoolean) return this.ReadByte() != 0;
     if (type == Typer.TypeChar) return (char)this.ReadByte();
@@ -701,8 +702,9 @@ public class NaibStream
       for (var i = 0; i < a.Length; i++) this.WriteGuid(a[i]);
   }
 
-  public void WriteValue(Type type, object data)
+  public void WriteValue(Type? type, object? data)
   {
+    if (type == null) return;
     if (type == Typer.TypeByte) this.BaseStream.WriteByte(data != null ? (byte)data : (byte)0);
     else if (type == Typer.TypeBoolean) this.BaseStream.WriteByte((byte)(data != null && (bool)data ? 1 : 0));
     else if (type == Typer.TypeChar) this.BaseStream.WriteByte(data != null ? (byte)(char)data : (byte)0);

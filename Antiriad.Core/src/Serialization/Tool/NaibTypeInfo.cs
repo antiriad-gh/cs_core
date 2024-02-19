@@ -30,7 +30,7 @@ internal class NaibTypeInfo
     this.LocalId = localid;
     this.RemoteId = remoteid;
     this.Type = type;
-    this.Name = NaibTypeInfo.GetAliasFromType(this.Type.FullName);
+    this.Name = NaibTypeInfo.GetAliasFromType(this.Type.FullName!);
 
     var metap = new List<PropertyMetadata>();
 
@@ -61,7 +61,7 @@ internal class NaibTypeInfo
     metap.ForEach((i, e) => e.LocalId = (short)i);
 
     if (type.IsArray || type.IsPrimitive || type == Typer.TypeString)
-      this.Constructor = () => Activator.CreateInstance(type);
+      this.Constructor = () => Activator.CreateInstance(type)!;
     else if (type.IsValueType || type.GetConstructor(Type.EmptyTypes) != null)
       this.Constructor = MethodGenerator.MakeConstructorHandler(type);
     else
@@ -70,7 +70,7 @@ internal class NaibTypeInfo
     this.Props = metap.ToArray();
   }
 
-  public object NewInstance()
+  public object? NewInstance()
   {
     try
     {
@@ -115,9 +115,9 @@ internal class NaibTypeInfo
   {
     lock (HashLock)
     {
-      var name = type.FullName;
+      var name = type.FullName!;
 
-      if (!HashAliases.TryGetValue(name, out HashPair pair))
+      if (!HashAliases.TryGetValue(name, out var pair))
       {
         HashAliases.Add(name, pair = new HashPair(alias, id));
         if (pair.Id == 0) pair.Id = NaibStream.CalculateHash(alias);
@@ -135,7 +135,7 @@ internal class NaibTypeInfo
 
   public static int GetHash(Type type)
   {
-    return NaibStream.CalculateHash(type.FullName);
+    return NaibStream.CalculateHash(type.FullName!);
   }
 
   public static string GetTypeFromAlias(string value)

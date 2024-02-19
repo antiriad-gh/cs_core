@@ -234,7 +234,7 @@ public static class CollectionHelper
   /// </summary>
   /// <param name="value"></param>
   /// <returns></returns>
-  public static int Count(this IEnumerable value)
+  public static int Count(this IEnumerable? value)
   {
     if (value == null) return 0;
     if (value is Array array) return array.Length;
@@ -250,7 +250,7 @@ public static class CollectionHelper
   /// </summary>
   /// <param name="value"></param>
   /// <returns></returns>
-  public static int GetCount(object value)
+  public static int GetCount(object? value)
   {
     if (value == null) return 0;
     if (value is Array array) return array.Length;
@@ -282,7 +282,7 @@ public static class CollectionHelper
   /// </summary>
   /// <param name="i">Elements</param>
   /// <returns></returns>
-  public static Array? CopyToArray(this IEnumerable i)
+  public static Array? CopyToArray(this IEnumerable? i)
   {
     if (i == null) return null;
     var list = ToCollection(i);
@@ -293,7 +293,7 @@ public static class CollectionHelper
     return arr;
   }
 
-  public static T[]? CopyTo<T>(this Array value)
+  public static T[]? CopyTo<T>(this Array? value)
   {
     if (value == null)
       return null;

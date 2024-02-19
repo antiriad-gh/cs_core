@@ -14,41 +14,41 @@ public class NaibDeserializer
 
   private readonly NaibTypeInfoList cache;
   private readonly List<object> objects = new();
-  private NaibStream stream;
+  private NaibStream? stream;
+  private MethodInfo? dictAddm;
   private short version;
-  private MethodInfo dictAddm;
   private bool dictAddmSearched;
 
   public NaibDeserializer() : this(null) { }
 
-  public NaibDeserializer(NaibTypeInfoList cache)
+  public NaibDeserializer(NaibTypeInfoList? cache)
   {
     this.cache = cache ?? new NaibTypeInfoList();
   }
 
-  public static T Decode<T>(byte[] data)
+  public static T? Decode<T>(byte[] data)
   {
     var e1 = new NaibDeserializer();
     var m1 = new MemoryStream(data);
     return e1.Read<T>(m1);
   }
 
-  public T Read<T>(Stream mem)
+  public T? Read<T>(Stream mem)
   {
     this.objects.Clear();
     this.stream = new NaibStream(mem);
     this.version = this.stream.ReadVersion();
-    return (T)this.Read(typeof(T));
+    return (T)this.Read(typeof(T))!;
   }
 
-  public object Read(Stream mem)
+  public object? Read(Stream mem)
   {
     return this.Read<object>(mem);
   }
 
-  private object Read(Type destType)
+  private object? Read(Type? destType)
   {
-    var dataType = this.stream.ReadByte();
+    var dataType = this.stream!.ReadByte();
     var type = Units.FromUnit((Unit)(dataType & NaibStream.DataTypeMask));
 
     if ((dataType & NaibStream.ArrayMask) > 0)
@@ -68,7 +68,7 @@ public class NaibDeserializer
 
     var value = this.stream.ReadValue(type);
 
-    if (type == Typer.TypeDateTimeOffset && destType == Typer.TypeDateTime)
+    if (type == Typer.TypeDateTimeOffset && destType == Typer.TypeDateTime && value != null)
     {
       value = ((DateTimeOffset)value).DateTime;
     }
@@ -76,11 +76,11 @@ public class NaibDeserializer
     return type != null && type.IsPrimitive ? Typer.Cast(destType, value) : value;
   }
 
-  private object ReadObject()
+  private object? ReadObject()
   {
-    var remoteid = this.stream.ReadShort();
+    var remoteid = this.stream!.ReadShort();
     var isnew = (remoteid & NaibStream.NewObjectMask) > 0;
-    NaibTypeInfo info;
+    NaibTypeInfo? info;
 
     if (isnew)
     {
@@ -110,48 +110,51 @@ public class NaibDeserializer
     var obj = info.NewInstance();
     var props = info.Props;
 
-    this.objects.Add(obj);
-
-    for (var i = 0; i < info.RemotePropCount; i++)
-    {
-      PropertyMetadata prop = null;
-      var propName = isnew ? this.stream.ReadString() : null;
-      var propIndex = this.stream.ReadShort();
-
-      try
-      {
-        if (propName != null)
+        if (obj != null)
         {
-          prop = props.Find(p => p.Name.EqualsOrdinalIgnoreCase(propName));
+            this.objects.Add(obj);
 
-          if (prop != null)
-            prop.RemoteId = propIndex;
-          else
-            Trace.Error($"property name={propName} not found at class={obj.GetType().Name}");
+            for (var i = 0; i < info.RemotePropCount; i++)
+            {
+                PropertyMetadata? prop = null;
+                var propName = isnew ? this.stream.ReadString() : null;
+                var propIndex = this.stream.ReadShort();
+
+                try
+                {
+                    if (propName != null)
+                    {
+                        prop = props.Find(p => p.Name.EqualsOrdinalIgnoreCase(propName));
+
+                        if (prop != null)
+                            prop.RemoteId = propIndex;
+                        else
+                            Trace.Error($"property name={propName} not found at class={obj.GetType().Name}");
+                    }
+                    else
+                        prop = props.Find(p => p.RemoteId == propIndex);
+
+                    var propValue = this.Read(prop?.DataType);
+                    prop?.Set(obj, propValue);
+                }
+                catch (Exception ex)
+                {
+                    var hresult = System.Runtime.InteropServices.Marshal.GetHRForException(ex);
+
+                    if (hresult != EInvalidArgument)
+                    {
+                        Trace.Error($"cannot deserialize field={propName ?? (prop != null ? prop.Name : "?")}");
+                    }
+                }
+            }
         }
-        else
-          prop = props.Find(p => p.RemoteId == propIndex);
-
-        var propValue = this.Read(prop?.DataType);
-        prop?.Set(obj, propValue);
-      }
-      catch (Exception ex)
-      {
-        var hresult = System.Runtime.InteropServices.Marshal.GetHRForException(ex);
-
-        if (hresult != EInvalidArgument)
-        {
-          Trace.Error($"cannot deserialize field={propName ?? (prop != null ? prop.Name : "?")}");
-        }
-      }
-    }
 
     return obj;
   }
 
-  private object? ReadArray(Type listType, Type destType)
+  private object? ReadArray(Type? listType, Type? destType)
   {
-    var count = this.stream.ReadSize();
+    var count = this.stream!.ReadSize();
 
     if (count <= 0 || listType == null || destType == null)
       return null;
@@ -193,7 +196,7 @@ public class NaibDeserializer
     {
       destType = destType.GetElementType() ?? Typer.TypeObject;
       var array = destType == Typer.TypeObject ? null : Array.CreateInstance(destType, count);
-      Type arrayType = null;
+      Type? arrayType = null;
 
       for (var i = 0; i < count; i++)
       {
@@ -248,12 +251,15 @@ public class NaibDeserializer
 
     var ga = destType.GetGenericArguments();
     destType = ga.Length > 0 ? ga[0] : Typer.TypeObject;
-    var list = (IList)Activator.CreateInstance(typeof(List<>).MakeGenericType(new[] { destType }), count);
+    var list = Activator.CreateInstance(typeof(List<>).MakeGenericType(new[] { destType }), count) as IList;
 
-    for (var i = 0; i < count; i++)
-    {
-      list.Add(this.Read(destType));
-    }
+        if (list != null)
+        {
+            for (var i = 0; i < count; i++)
+            {
+                list.Add(this.Read(destType));
+            }
+        }
 
     return list;
   }

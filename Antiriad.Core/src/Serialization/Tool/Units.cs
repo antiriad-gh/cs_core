@@ -46,8 +46,9 @@ public static class Units
     Guid.Empty,
   };
 
-  public static Unit FromType(Type type)
+  public static Unit FromType(Type? type)
   {
+    if (type == null) return Unit.Unknown;
     if (type.IsArray) type = type.GetElementType()!;
     if (type == Typer.TypeByte || type == Typer.TypeSByte) return Unit.Byte;
     if (type == Typer.TypeBoolean) return Unit.Bool;

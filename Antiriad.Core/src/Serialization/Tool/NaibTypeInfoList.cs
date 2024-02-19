@@ -21,24 +21,24 @@ public class NaibTypeInfoList
   {
     lock (AliasesLock)
     {
-      return Aliases.TryGetValue(name, out string alias) ? alias : name;
+      return Aliases.TryGetValue(name, out var alias) ? alias : name;
     }
   }
 
   private readonly object locker = new();
   private readonly List<NaibTypeInfo> cache = new();
 
-  internal NaibTypeInfo Find(short remoteid)
+  internal NaibTypeInfo? Find(short remoteid)
   {
     lock (this.locker) return this.cache.Find(i => i.RemoteId == remoteid);
   }
 
-  internal NaibTypeInfo Find(Type type)
+  internal NaibTypeInfo? Find(Type? type)
   {
     lock (this.locker) return this.cache.Find(i => i.Type == type);
   }
 
-  internal NaibTypeInfo FindOrCreate(string alias, short remoteid)
+  internal NaibTypeInfo? FindOrCreate(string alias, short remoteid)
   {
     lock (this.locker)
     {
@@ -67,14 +67,14 @@ public class NaibTypeInfoList
     }
   }
 
-  private static Type SafeGetAssemblies(string find)
+  private static Type? SafeGetAssemblies(string find)
   {
     find = ExpandAlias(find);
     return
       AppDomain.CurrentDomain.GetAssemblies()
         .SelectMany(a => a.GetModules())
         .SelectMany(SafeGetTypes)
-        .FirstOrDefault(t => t.FullName.EqualsOrdinalIgnoreCase(find)) ??
+        .FirstOrDefault(t => t.FullName!.EqualsOrdinalIgnoreCase(find)) ??
         FindAssembly(find);
   }
 
@@ -90,7 +90,7 @@ public class NaibTypeInfoList
     }
   }
 
-  private static Type FindAssembly(string name)
+  private static Type? FindAssembly(string name)
   {
     var last = 0;
     while (last <= name.Length)
@@ -111,7 +111,7 @@ public class NaibTypeInfoList
 
   internal NaibTypeInfo Store(Type type)
   {
-    NaibTypeInfo info;
+    NaibTypeInfo? info;
 
     lock (this.locker)
     {

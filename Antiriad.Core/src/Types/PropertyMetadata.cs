@@ -24,7 +24,7 @@ public class PropertyMetadata
     this.cached = MemberMetadata.Get(type, info);
   }
 
-  public void Set(object source, object value)
+  public void Set(object source, object? value)
   {
     this.Setter?.Invoke(source, value);
   }
