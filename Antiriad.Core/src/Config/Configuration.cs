@@ -1,5 +1,3 @@
-using Antiriad.Core.Log;
-
 namespace Antiriad.Core.Config;
 
 public static class Configuration

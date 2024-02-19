@@ -21,12 +21,6 @@ internal class ConfigurationReader
     if (type == null)
       return null;
 
-    // if (type.IsEnum)
-    // {
-    //   var index = Array.FindIndex(type.GetEnumNames(), i => i.EqualsOrdinalIgnoreCase(value));
-    //   return index >= 0 ? index : null;
-    // }
-    //else 
     if (type.IsPrimitive || type == Typer.TypeString || type == Typer.TypeTimeSpan || type == Typer.TypeDateTime || type == Typer.TypeDateTimeOffset || type == Typer.TypeTimeOnly)
       value = value.Trim(' ', '"', '/');
 
@@ -39,7 +33,7 @@ internal class ConfigurationReader
     var lines = File.ReadLines(this.file);
     var insection = string.IsNullOrEmpty(this.section);
 
-    foreach (var line in lines)
+    foreach (var line in lines.Select(i => i.Trim()))
     {
       if (line.StartsWith('#'))
         continue;
@@ -55,6 +49,9 @@ internal class ConfigurationReader
       else if (insection)
         this.AssignProperty(conf, line);
     }
+
+    if (!insection)
+      Trace.Warning($"config section={this.section} was not found");
 
     return conf;
   }
@@ -84,7 +81,7 @@ internal class ConfigurationReader
         setter.SetValue(value);
       }
       else
-        Trace.Error($"config parameter not recognized '{this.section}.{name}'");
+        Trace.Warning($"config parameter not recognized '{this.section}.{name}'");
     }
     catch (Exception ex)
     {
