@@ -85,7 +85,7 @@ public class ConnectorServer
     }
     catch (Exception ex)
     {
-      Trace.Error($"PipeServer.FireClientConnected:error:{ex.Message}");
+      Trace.Exception(ex);
     }
   }
 }
