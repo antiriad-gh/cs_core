@@ -1,4 +1,5 @@
 ﻿using System.Reflection;
+using System.Runtime.CompilerServices;
 using Antiriad.Core.Collections;
 using Antiriad.Core.Types;
 
@@ -519,13 +520,40 @@ public static class Typer
         return index >= 0 ? index : null;
       }
 
-      if (srcval is not Array srca)
-        return srctype == dsttype ? srcval : Convert(srcval, srctype, dsttype);
+      if (typeof(ITuple).IsAssignableFrom(dsttype))
+      {
+                var ga = dsttype.GenericTypeArguments;
+                
+                if (srctype == Typer.TypeString)
+                {
+                    var values = ((string)srcval).TrimStart('(').TrimEnd(')').Split(',');
+                    if (values.Length != ga.Length)
+                        return null;
+                    var dstvalues = new object?[values.Length];
+                    for (var i = 0; i < values.Length; i++)
+                        dstvalues[i] = Cast(ga[i], values[i]);
+                    return Activator.CreateInstance(dsttype, dstvalues);
+                }
+                else if (srctype.IsArray)
+                {
+                    var aa = ArrayAccessor.ForObject();
+                    var valuesLength = aa.GetLength(srcval);
+                    if (valuesLength != ga.Length)
+                        return null;
+                    var dstvalues = new object?[valuesLength];
+                    for (var i = 0; i < valuesLength; i++)
+                        dstvalues[i] = Cast(ga[i], aa.Get(srcval, i));
+                    return Activator.CreateInstance(dsttype, dstvalues);
+                }
+            }
 
-      if (srca.Length == 0 || (srcval = srca.GetValue(0)!) == null)
-        return DefValue(dsttype);
+        if (srcval is not Array srca)
+            return srctype == dsttype ? srcval : Convert(srcval, srctype, dsttype);
 
-      return (srctype = srctype.GetElementType()) == dsttype ? srcval : Convert(srcval, srctype!, dsttype);
+        if (srca.Length == 0 || (srcval = srca.GetValue(0)!) == null)
+            return DefValue(dsttype);
+
+        return (srctype = srctype.GetElementType()) == dsttype ? srcval : Convert(srcval, srctype!, dsttype);
     }
     catch
     {
