@@ -10,204 +10,236 @@ internal delegate void SetHandler(object source, object value);
 
 public static class MethodGenerator
 {
-  internal static ConstructorHandler MakeConstructorHandler(Type type)
-  {
-    var constructorInfo = type.GetConstructor(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance, null, Array.Empty<Type>(), null);
-
-    if (constructorInfo == null)
+    internal static ConstructorHandler MakeConstructorHandler(Type type)
     {
-      if (type.IsAnsiClass)
-        return () => Activator.CreateInstance(type)!;
+        var constructorInfo = type.GetConstructor(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance, null, Array.Empty<Type>(), null);
 
-      throw new ApplicationException(string.Format("The type {0} must declare an empty constructor.", type));
+        if (constructorInfo == null)
+        {
+            if (type.IsAnsiClass)
+                return () => Activator.CreateInstance(type)!;
+
+            throw new ApplicationException(string.Format("The type {0} must declare an empty constructor.", type));
+        }
+
+        var dynamicMethod = new DynamicMethod("ContructObject", MethodAttributes.Static | MethodAttributes.Public, CallingConventions.Standard, Typer.TypeObject, null, type, true);
+        var ilgen = dynamicMethod.GetILGenerator();
+
+        ilgen.Emit(OpCodes.Newobj, constructorInfo);
+        ilgen.Emit(OpCodes.Ret);
+
+        return (ConstructorHandler)dynamicMethod.CreateDelegate(typeof(ConstructorHandler));
     }
 
-    var dynamicMethod = new DynamicMethod("ContructObject", MethodAttributes.Static | MethodAttributes.Public, CallingConventions.Standard, Typer.TypeObject, null, type, true);
-    var ilgen = dynamicMethod.GetILGenerator();
-
-    ilgen.Emit(OpCodes.Newobj, constructorInfo);
-    ilgen.Emit(OpCodes.Ret);
-
-    return (ConstructorHandler)dynamicMethod.CreateDelegate(typeof(ConstructorHandler));
-  }
-
-  internal static GetHandler MakeGetHandler(Type type, PropertyInfo propertyInfo)
-  {
-    if (type.IsAnsiClass && propertyInfo.CanRead)
-      return o => propertyInfo.GetValue(o, null)!;
-
-    var getMethodInfo = propertyInfo.GetGetMethod(true);
-    var dynamicGet = MakeGetDynamicMethod(type);
-    var ilgen = dynamicGet.GetILGenerator();
-
-    ilgen.Emit(OpCodes.Ldarg_0);
-    ilgen.Emit(OpCodes.Call, getMethodInfo!);
-    BoxIfNeeded(getMethodInfo!.ReturnType, ilgen);
-    ilgen.Emit(OpCodes.Ret);
-
-    return (GetHandler)dynamicGet.CreateDelegate(typeof(GetHandler));
-  }
-
-  internal static GetHandler MakeGetHandler(Type type, FieldInfo fieldInfo)
-  {
-    if (type.IsAnsiClass)
-      return fieldInfo.GetValue!;
-
-    var dynamicGet = MakeGetDynamicMethod(type);
-    var ilgen = dynamicGet.GetILGenerator();
-
-    ilgen.Emit(OpCodes.Ldarg_0);
-    ilgen.Emit(OpCodes.Ldfld, fieldInfo);
-    BoxIfNeeded(fieldInfo.FieldType, ilgen);
-    ilgen.Emit(OpCodes.Ret);
-
-    return (GetHandler)dynamicGet.CreateDelegate(typeof(GetHandler));
-  }
-
-  internal static SetHandler? MakeSetHandler(Type type, PropertyInfo propertyInfo)
-  {
-    try
+    internal static GetHandler MakeGetHandler(Type type, PropertyInfo propertyInfo)
     {
-      if (type.IsAnsiClass && propertyInfo.CanWrite)
-        return (o, v) => propertyInfo.SetValue(o, v, null);
+        if (type.IsAnsiClass && propertyInfo.CanRead)
+            return o => propertyInfo.GetValue(o, null)!;
 
-      var setMethodInfo = propertyInfo.GetSetMethod(true);
+        var getMethodInfo = propertyInfo.GetGetMethod(true);
+        var dynamicGet = MakeGetDynamicMethod(type);
+        var ilgen = dynamicGet.GetILGenerator();
 
-      if (setMethodInfo == null)
-        return null;
+        ilgen.Emit(OpCodes.Ldarg_0);
+        ilgen.Emit(OpCodes.Call, getMethodInfo!);
+        BoxIfNeeded(getMethodInfo!.ReturnType, ilgen);
+        ilgen.Emit(OpCodes.Ret);
 
-      var dynamicSet = MakeSetDynamicMethod(type);
-      var ilgen = dynamicSet.GetILGenerator();
-
-      ilgen.Emit(OpCodes.Ldarg_0);
-      ilgen.Emit(OpCodes.Ldarg_1);
-      UnboxIfNeeded(setMethodInfo.GetParameters()[0].ParameterType, ilgen);
-      ilgen.Emit(OpCodes.Call, setMethodInfo);
-      ilgen.Emit(OpCodes.Ret);
-
-      return (SetHandler)dynamicSet.CreateDelegate(typeof(SetHandler));
-    }
-    catch
-    {
-      throw new NotSupportedException(string.Format("Error with type={0}", type));
-    }
-  }
-
-  internal static SetHandler? MakeSetHandler(Type type, FieldInfo fieldInfo)
-  {
-    if (type.IsAnsiClass)
-      return fieldInfo.SetValue;
-
-    if (fieldInfo.IsInitOnly || fieldInfo.IsLiteral)
-      return null;
-
-    var dynamicSet = MakeSetDynamicMethod(type);
-    var ilgen = dynamicSet.GetILGenerator();
-
-    ilgen.Emit(OpCodes.Ldarg_0);
-    ilgen.Emit(OpCodes.Ldarg_1);
-    UnboxIfNeeded(fieldInfo.FieldType, ilgen);
-    ilgen.Emit(OpCodes.Stfld, fieldInfo);
-    ilgen.Emit(OpCodes.Ret);
-
-    return (SetHandler)dynamicSet.CreateDelegate(typeof(SetHandler));
-  }
-
-  internal static DynamicMethod? MakeGenericMethod(MethodInfo? method, Type genericType)
-  {
-    if (method == null)
-      return null;
-
-    var caller = new DynamicMethod("DynamicGeneric_" + genericType.Name, Typer.TypeObject, new[] { Typer.TypeObject }, true);
-    var ilgen = caller.GetILGenerator();
-    ilgen.Emit(OpCodes.Ldarg_0);
-    ilgen.Emit(OpCodes.Call, method.MakeGenericMethod(new[] { genericType }));
-    ilgen.Emit(OpCodes.Ret);
-    return caller;
-  }
-
-  public static T MakeUntypedDelegate<T>(MethodInfo method, object handler)
-  {
-    return (T)MakeUntypedDelegate(typeof(T), method, handler.GetType());
-  }
-
-  public static object MakeUntypedDelegate(Type delegateType, MethodInfo method, Type handlerType)
-  {
-    var sargs = method.GetParameters().Select(i => i.ParameterType).ToArray();
-    var margs = Enumerable.Range(0, sargs.Length + 1).Select(i => typeof(object)).ToArray();
-    var caller = new DynamicMethod(method.Name + "_Untyped", method.ReturnType, margs, handlerType, true);
-    var ilgen = caller.GetILGenerator();
-
-    ilgen.Emit(OpCodes.Ldarg_0);                    // load this
-
-    for (var i = 0; i < sargs.Length; i++)
-    {
-      ilgen.Emit(OpCodes.Ldarg_S, i + 1);         // load arg I
-      ilgen.Emit(OpCodes.Castclass, sargs[i]);    // cast to arg type
+        return (GetHandler)dynamicGet.CreateDelegate(typeof(GetHandler));
     }
 
-    ilgen.Emit(OpCodes.Call, method);               // call method
-    ilgen.Emit(OpCodes.Ret);                        // return
-
-    return caller.CreateDelegate(delegateType);
-  }
-
-  // object(object, object[]) / void(object, object[])
-  public static object MakeUntypedDelegateArrayArgument(Type delegateType, MethodInfo method, Type handlerType)
-  {
-    if (method == null)
-      throw new Exception("method info cannot be null");
-
-    var isfunc = method.ReturnType != typeof(void);
-    var sargs = method.GetParameters().Select(i => i.ParameterType).ToArray();
-    var margs = new[] { Typer.TypeObject, Typer.TypeObjectArray };
-    var caller = new DynamicMethod(method.Name + "_UntypedA", isfunc ? typeof(object) : typeof(void), margs, handlerType, true);
-    var ilgen = caller.GetILGenerator();
-
-    ilgen.Emit(OpCodes.Ldarg_0);                // load this
-
-    for (var i = 0; i < sargs.Length; i++)
+    internal static GetHandler MakeGetHandler(Type type, FieldInfo fieldInfo)
     {
-      ilgen.Emit(OpCodes.Ldarg_1);            // load array
-      ilgen.Emit(OpCodes.Ldc_I4, i);          // load index
-      ilgen.Emit(OpCodes.Ldelem_Ref);         // load array[index]
-      UnboxIfNeeded(sargs[i], ilgen);         // unbox based on element type
+        if (type.IsAnsiClass)
+            return fieldInfo.GetValue!;
+
+        var dynamicGet = MakeGetDynamicMethod(type);
+        var ilgen = dynamicGet.GetILGenerator();
+
+        ilgen.Emit(OpCodes.Ldarg_0);
+        ilgen.Emit(OpCodes.Ldfld, fieldInfo);
+        BoxIfNeeded(fieldInfo.FieldType, ilgen);
+        ilgen.Emit(OpCodes.Ret);
+
+        return (GetHandler)dynamicGet.CreateDelegate(typeof(GetHandler));
     }
 
-    ilgen.Emit(OpCodes.Call, method);           // call method
+    internal static SetHandler? MakeSetHandler(Type type, PropertyInfo propertyInfo)
+    {
+        try
+        {
+            if (type.IsAnsiClass && propertyInfo.CanWrite)
+                return (o, v) => propertyInfo.SetValue(o, v, null);
 
-    if (isfunc)
-      BoxIfNeeded(method.ReturnType, ilgen);  // box if needed
+            var setMethodInfo = propertyInfo.GetSetMethod(true);
 
-    ilgen.Emit(OpCodes.Ret);                    // return
+            if (setMethodInfo == null)
+                return null;
 
-    return caller.CreateDelegate(delegateType);
-  }
+            var dynamicSet = MakeSetDynamicMethod(type);
+            var ilgen = dynamicSet.GetILGenerator();
 
-  internal static T? MakeGenericDelegate<T>(MethodInfo? method, Type genericType)
-  {
-    return (T?)(object?)MethodGenerator.MakeGenericMethod(method, genericType)?.CreateDelegate(typeof(T));
-  }
+            ilgen.Emit(OpCodes.Ldarg_0);
+            ilgen.Emit(OpCodes.Ldarg_1);
+            UnboxIfNeeded(setMethodInfo.GetParameters()[0].ParameterType, ilgen);
+            ilgen.Emit(OpCodes.Call, setMethodInfo);
+            ilgen.Emit(OpCodes.Ret);
 
-  private static DynamicMethod MakeGetDynamicMethod(Type type)
-  {
-    return new DynamicMethod("DynamicGet", Typer.TypeObject, new[] { Typer.TypeObject }, type, true);
-  }
+            return (SetHandler)dynamicSet.CreateDelegate(typeof(SetHandler));
+        }
+        catch
+        {
+            throw new NotSupportedException(string.Format("Error with type={0}", type));
+        }
+    }
 
-  private static DynamicMethod MakeSetDynamicMethod(Type type)
-  {
-    return new DynamicMethod("DynamicSet", Typer.TypeVoid, new[] { Typer.TypeObject, Typer.TypeObject }, type, true);
-  }
+    internal static SetHandler? MakeSetHandler(Type type, FieldInfo fieldInfo)
+    {
+        if (type.IsAnsiClass)
+            return fieldInfo.SetValue;
 
-  public static void BoxIfNeeded(Type type, ILGenerator generator)
-  {
-    if (type.IsValueType)
-      generator.Emit(OpCodes.Box, type);
-  }
+        if (fieldInfo.IsInitOnly || fieldInfo.IsLiteral)
+            return null;
 
-  public static void UnboxIfNeeded(Type type, ILGenerator generator)
-  {
-    if (type.IsValueType)
-      generator.Emit(OpCodes.Unbox_Any, type);
-  }
+        var dynamicSet = MakeSetDynamicMethod(type);
+        var ilgen = dynamicSet.GetILGenerator();
+
+        ilgen.Emit(OpCodes.Ldarg_0);
+        ilgen.Emit(OpCodes.Ldarg_1);
+        UnboxIfNeeded(fieldInfo.FieldType, ilgen);
+        ilgen.Emit(OpCodes.Stfld, fieldInfo);
+        ilgen.Emit(OpCodes.Ret);
+
+        return (SetHandler)dynamicSet.CreateDelegate(typeof(SetHandler));
+    }
+
+    internal static DynamicMethod? MakeGenericMethod(MethodInfo? method, Type genericType)
+    {
+        if (method == null)
+            return null;
+
+        var caller = new DynamicMethod("DynamicGeneric_" + genericType.Name, Typer.TypeObject, new[] { Typer.TypeObject }, true);
+        var ilgen = caller.GetILGenerator();
+        ilgen.Emit(OpCodes.Ldarg_0);
+        ilgen.Emit(OpCodes.Call, method.MakeGenericMethod(new[] { genericType }));
+        ilgen.Emit(OpCodes.Ret);
+        return caller;
+    }
+
+    public static T MakeUntypedDelegate<T>(MethodInfo method, object handler)
+    {
+        return (T)MakeUntypedDelegate(typeof(T), method, handler.GetType());
+    }
+
+    public static object MakeUntypedDelegate(Type delegateType, MethodInfo method, Type handlerType)
+    {
+        var sargs = method.GetParameters().Select(i => i.ParameterType).ToArray();
+        var margs = Enumerable.Range(0, sargs.Length + 1).Select(i => typeof(object)).ToArray();
+        var caller = new DynamicMethod(method.Name + "_Untyped", method.ReturnType, margs, handlerType, true);
+        var ilgen = caller.GetILGenerator();
+
+        ilgen.Emit(OpCodes.Ldarg_0);                    // load this
+
+        for (var i = 0; i < sargs.Length; i++)
+        {
+            ilgen.Emit(OpCodes.Ldarg_S, i + 1);         // load arg I
+            ilgen.Emit(OpCodes.Castclass, sargs[i]);    // cast to arg type
+        }
+
+        ilgen.Emit(OpCodes.Call, method);               // call method
+        ilgen.Emit(OpCodes.Ret);                        // return
+
+        return caller.CreateDelegate(delegateType);
+    }
+
+    // object(object, object[]) / void(object, object[])
+    public static object MakeUntypedDelegateArrayArgument(Type delegateType, MethodInfo method, Type handlerType)
+    {
+        if (method == null)
+            throw new Exception("method info cannot be null");
+
+        var isfunc = method.ReturnType != typeof(void);
+        var sargs = method.GetParameters();
+        var margs = new[] { Typer.TypeObject, Typer.TypeObjectArray };
+        var caller = new DynamicMethod(method.Name + "_UntypedA", isfunc ? typeof(object) : typeof(void), margs, handlerType, true);
+        var il = caller.GetILGenerator();
+        var locals = new LocalBuilder[sargs.Length];
+
+        if (!method.IsStatic)
+            il.Emit(OpCodes.Ldarg_0);                // load this
+
+        for (var i = 0; i < sargs.Length; i++)
+        {
+            if (sargs[i].IsOut || sargs[i].ParameterType.IsByRef)
+            {
+                locals[i] = il.DeclareLocal(sargs[i].ParameterType);
+                il.Emit(OpCodes.Ldloca, locals[i]);
+            }
+            else
+            {
+                il.Emit(OpCodes.Ldarg_1);            // load array
+                il.Emit(OpCodes.Ldc_I4, i);          // load array index
+                il.Emit(OpCodes.Ldelem_Ref);         // load array[index]
+            }
+
+            UnboxIfNeeded(sargs[i].ParameterType, il);         // unbox based on element type
+        }
+
+        if (method.IsFinal || !method.IsVirtual) // call method
+        {
+            il.Emit(OpCodes.Call, method);
+        }
+        else
+        {
+            il.Emit(OpCodes.Callvirt, method);
+        }
+
+        if (isfunc)
+            BoxIfNeeded(method.ReturnType, il);  // box if needed
+
+        for (int idx = 0; idx < sargs.Length; ++idx)
+        {
+            if (sargs[idx].IsOut || sargs[idx].ParameterType.IsByRef)
+            {
+                il.Emit(OpCodes.Ldarg_1);
+                il.Emit(OpCodes.Ldc_I4, idx);
+                il.Emit(OpCodes.Ldloc, locals[idx].LocalIndex);
+
+                BoxIfNeeded(sargs[idx].ParameterType.GetElementType()!, il);
+
+                il.Emit(OpCodes.Stelem_Ref);
+            }
+        }
+
+        il.Emit(OpCodes.Ret);                    // return
+
+        return caller.CreateDelegate(delegateType);
+    }
+
+    internal static T? MakeGenericDelegate<T>(MethodInfo? method, Type genericType)
+    {
+        return (T?)(object?)MethodGenerator.MakeGenericMethod(method, genericType)?.CreateDelegate(typeof(T));
+    }
+
+    private static DynamicMethod MakeGetDynamicMethod(Type type)
+    {
+        return new DynamicMethod("DynamicGet", Typer.TypeObject, new[] { Typer.TypeObject }, type, true);
+    }
+
+    private static DynamicMethod MakeSetDynamicMethod(Type type)
+    {
+        return new DynamicMethod("DynamicSet", Typer.TypeVoid, new[] { Typer.TypeObject, Typer.TypeObject }, type, true);
+    }
+
+    public static void BoxIfNeeded(Type type, ILGenerator generator)
+    {
+        if (type.IsValueType)
+            generator.Emit(OpCodes.Box, type);
+    }
+
+    public static void UnboxIfNeeded(Type type, ILGenerator generator)
+    {
+        if (type.IsValueType)
+            generator.Emit(OpCodes.Unbox_Any, type);
+    }
 }
