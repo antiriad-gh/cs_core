@@ -449,8 +449,8 @@ public static class Typer
   private static ConvertDelegate CreateConvertCast(Type type)
   {
     var d = MethodGenerator.MakeGenericDelegate<ConvertDelegate>(CastToInfo, type);
-    ConvertCast.Add(type, d);
-    return d;
+    ConvertCast.Add(type, d!);
+    return d!;
   }
 
   private static ConvertDelegate GetConverter(Type srct, Type dstt)
