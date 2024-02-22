@@ -197,15 +197,15 @@ public static class MethodGenerator
         if (isfunc)
             BoxIfNeeded(method.ReturnType, il);  // box if needed
 
-        for (int idx = 0; idx < sargs.Length; ++idx)
+        for (int i = 0; i < sargs.Length; ++i)
         {
-            if (sargs[idx].IsOut || sargs[idx].ParameterType.IsByRef)
+            if (sargs[i].IsOut || sargs[i].ParameterType.IsByRef)
             {
                 il.Emit(OpCodes.Ldarg_1);
-                il.Emit(OpCodes.Ldc_I4, idx);
-                il.Emit(OpCodes.Ldloc, locals[idx].LocalIndex);
+                il.Emit(OpCodes.Ldc_I4, i);
+                il.Emit(OpCodes.Ldloc, locals[i].LocalIndex);
 
-                BoxIfNeeded(sargs[idx].ParameterType.GetElementType()!, il);
+                BoxIfNeeded(sargs[i].ParameterType.GetElementType()!, il);
 
                 il.Emit(OpCodes.Stelem_Ref);
             }

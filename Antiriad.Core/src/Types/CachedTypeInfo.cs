@@ -12,16 +12,17 @@ public class CachedTypeInfo
   public readonly Dictionary<string, PropertyMetadata> Props;
   public readonly ConstructorHandler Constructor;
 
-  public CachedTypeInfo(Type type)
+  public CachedTypeInfo(Type type, BindingFlags? flags = null)
   {
     this.Type = type;
-    this.Name = CachedTypeInfo.GetCleanName(this.Type.AssemblyQualifiedName);
+    this.Name = CachedTypeInfo.GetCleanAssemblyName(this.Type.AssemblyQualifiedName);
 
     var metap = new List<PropertyMetadata>();
+        var finalFlags = flags ?? BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.Instance | BindingFlags.Public;
 
     try
     {
-      var list = type.GetFields(BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.Instance | BindingFlags.Public);
+      var list = type.GetFields(finalFlags);
       metap.AddRange(list.Where(i => i.GetCustomAttributes(typeof(CompilerGeneratedAttribute), true).Length == 0).OrderBy(i => i.Name).Select(i => new PropertyMetadata(this.Type, i)));
     }
     catch (Exception)
@@ -30,7 +31,7 @@ public class CachedTypeInfo
 
     try
     {
-      var list = type.GetProperties(BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.Instance | BindingFlags.Public);
+      var list = type.GetProperties(finalFlags);
       metap.AddRange(list.Where(i => i.CanWrite).OrderBy(i => i.Name).Select(i => new PropertyMetadata(this.Type, i)));
     }
     catch (Exception)
@@ -53,7 +54,7 @@ public class CachedTypeInfo
     this.Props = metap.ToDictionary(i => i.Name, i => i);
   }
 
-  private static string GetCleanName(string? name)
+  public static string GetCleanAssemblyName(string? name)
   {
     if (name != null)
     {
