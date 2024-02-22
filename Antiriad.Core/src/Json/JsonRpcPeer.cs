@@ -391,7 +391,7 @@ public class JsonRpcPeer : IDisposable, IConnectorDataEvents
       Monitor.Exit(this.sendLock);
     }
 
-    var isok = this.PostPacketNolock(packet, context);
+    var isok = this.UnlockedPostPacket(packet, context);
 
     if (!isok || !wait.Signal.WaitOne(this.ReceiveTimeout))
     {
@@ -476,7 +476,7 @@ public class JsonRpcPeer : IDisposable, IConnectorDataEvents
         Trace.Debug($"PostPacket: operation complete on lap={(DateTime.UtcNow - lap).TotalMilliseconds}");
       }
 
-      return this.PostPacketNolock(packet, context);
+      return this.UnlockedPostPacket(packet, context);
     }
     finally
     {
@@ -484,7 +484,7 @@ public class JsonRpcPeer : IDisposable, IConnectorDataEvents
     }
   }
 
-  private bool PostPacketNolock<T>(IJsonRpcPacket<T> packet, object context)
+  private bool UnlockedPostPacket<T>(IJsonRpcPacket<T> packet, object context)
   {
     if (this.connector != null && this.connector.IsConnected)
     {

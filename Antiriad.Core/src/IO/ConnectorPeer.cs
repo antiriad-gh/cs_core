@@ -147,10 +147,10 @@ public class ConnectorPeer : IConnectorDataEvents, IMethodBinderInterceptor
 
   private bool Post(ConnectorPeerPacket packet)
   {
-    lock (this.clientLock) return this.PostNoLock(packet);
+    lock (this.clientLock) return this.UnlockedPost(packet);
   }
 
-  private bool PostNoLock(ConnectorPeerPacket packet)
+  private bool UnlockedPost(ConnectorPeerPacket packet)
   {
     if (this.client == null || !this.client.IsConnected)
       return false;
@@ -208,7 +208,7 @@ public class ConnectorPeer : IConnectorDataEvents, IMethodBinderInterceptor
     {
       this.waits.Add(wait);
 
-      if (!this.PostNoLock(packet))
+      if (!this.UnlockedPost(packet))
       {
         this.waits.Remove(wait);
         return null;
