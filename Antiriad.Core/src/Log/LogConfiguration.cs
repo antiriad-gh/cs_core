@@ -14,6 +14,7 @@ public class LogConfiguration
   public int MaxFileSize { get; set; } = 4096;
 
   public int MaxFileCount { get; set; } = 10;
+  public int FlushIntervalMM { get; set; } = 500;
 
   public bool Append { get; set; }
 

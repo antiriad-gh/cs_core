@@ -6,6 +6,7 @@ internal class Logger
 {
   internal readonly LogConfiguration Config;
   private StreamWriter? file;
+    private DateTime nextWrite = DateTime.MinValue;
   private bool finished;
   private int callerPadding = 20;
   private static readonly object locker = new();
@@ -115,7 +116,12 @@ internal class Logger
       }
 
       this.file!.WriteLine(textLine);
-      this.file.Flush();
+
+            if (this.Config.FlushIntervalMM == 0 || now >= this.nextWrite)
+            {
+                this.file.Flush();
+                this.nextWrite= now.AddMilliseconds(this.Config.FlushIntervalMM);
+            }
     }
   }
 
