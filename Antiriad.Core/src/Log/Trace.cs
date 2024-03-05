@@ -63,6 +63,7 @@ public sealed class Trace
   }
 
   public static LogConfiguration GetConfig() => (logger ?? Initialize()).Config;
+  public static bool Initialized => logger != null;
 
   public static void Debug(string fmt, [CallerMemberName] string caller = "")
   {

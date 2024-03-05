@@ -50,7 +50,7 @@ internal class ConfigurationReader
         this.AssignProperty(conf, line);
     }
 
-    if (!insection)
+    if (!insection && Trace.Initialized)
       Trace.Warning($"config section={this.section} was not found");
 
     return conf;
