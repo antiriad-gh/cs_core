@@ -23,7 +23,7 @@ public sealed class Trace
 
         try
         {
-          conf = Configuration.Read<LogConfiguration>(typeof(Trace).Namespace);
+          conf = ConfigFile.Read<LogConfiguration>(typeof(Trace).Namespace);
           conf ??= new LogConfiguration();
         }
         catch (Exception e)

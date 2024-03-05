@@ -1,16 +1,16 @@
-using System.Collections;
+﻿using System.Collections;
 using Antiriad.Core.Collections;
 using Antiriad.Core.Helpers;
 using Antiriad.Core.Log;
 
 namespace Antiriad.Core.Config;
 
-internal class ConfigurationReader
+internal class ConfigFileReader
 {
   private readonly string file;
   private readonly string? section;
 
-  public ConfigurationReader(string file, string? section)
+  public ConfigFileReader(string file, string? section)
   {
     this.file = file;
     this.section = section;
@@ -89,7 +89,7 @@ internal class ConfigurationReader
     }
   }
 
-  private ConfigSetter? GetSetter(object instance, string name)
+  private ConfigFileValueSetter? GetSetter(object instance, string name)
   {
     if (name.StartsWith('"'))
       name = name.Trim('"');
@@ -98,12 +98,12 @@ internal class ConfigurationReader
     var prop = configType.GetProperties().Find(i => i.Name.EqualsOrdinalIgnoreCase(name));
 
     if (prop != null)
-      return new ConfigSetter(instance, prop);
+      return new ConfigFileValueSetter(instance, prop);
 
     var field = configType.GetFields().Find(i => i.Name.EqualsOrdinalIgnoreCase(name));
 
     if (field != null)
-      return new ConfigSetter(instance, field);
+      return new ConfigFileValueSetter(instance, field);
 
     Trace.Error($"config parameter not recognized '{this.section}.{name}'");
     return null;

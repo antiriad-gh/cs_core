@@ -2,19 +2,19 @@
 
 namespace Antiriad.Core.Config;
 
-internal class ConfigSetter
+internal class ConfigFileValueSetter
 {
   private readonly object instance;
   private readonly PropertyInfo? prop;
   private readonly FieldInfo? field;
 
-  public ConfigSetter(object instance, PropertyInfo prop)
+  public ConfigFileValueSetter(object instance, PropertyInfo prop)
   {
     this.instance = instance;
     this.prop = prop;
   }
 
-  public ConfigSetter(object instance, FieldInfo field)
+  public ConfigFileValueSetter(object instance, FieldInfo field)
   {
     this.instance = instance;
     this.field = field;
