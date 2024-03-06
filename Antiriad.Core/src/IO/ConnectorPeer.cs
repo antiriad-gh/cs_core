@@ -14,15 +14,15 @@ public class ConnectorPeer : IConnectorDataEvents, IMethodBinderInterceptor
   private readonly short protocolId = 0;
   private readonly short protocolVersion = 0;
 
-  private Connector client;
-  private MethodBinder binder;
+  private Connector? client;
+  private MethodBinder? binder;
   private readonly object clientLock = new();
 
   private class WaitPacket
   {
     public int Sequence;
     public readonly AutoResetEvent Signal = new(false);
-    public ConnectorPeerPacket ReceivedPacket;
+    public ConnectorPeerPacket? ReceivedPacket;
   }
 
   public override string ToString()
@@ -39,12 +39,12 @@ public class ConnectorPeer : IConnectorDataEvents, IMethodBinderInterceptor
   /// <summary>
   /// Raised when a connection is established
   /// </summary>
-  public event EventHandler ConnectionEstablished;
+  public event EventHandler? ConnectionEstablished;
 
   /// <summary>
   /// Raised when a connection is closed
   /// </summary>
-  public event EventHandler ConnectionClosed;
+  public event EventHandler? ConnectionClosed;
 
   public ConnectorPeer() { }
 
@@ -75,7 +75,7 @@ public class ConnectorPeer : IConnectorDataEvents, IMethodBinderInterceptor
   }
 
   public bool IsConnected { get { return this.client != null && this.client.IsConnected; } }
-  public Connector Client { get { return this.client; } }
+  public Connector? Client { get { return this.client; } }
 
   public static int GetSize(ReadOnlySpan<byte> buffer)
   {
@@ -84,6 +84,9 @@ public class ConnectorPeer : IConnectorDataEvents, IMethodBinderInterceptor
 
   public bool Activate(bool reconnect)
   {
+    if (this.client == null)
+      return false;
+
     this.client.Reconnect = reconnect;
     return this.client.Activate(this);
   }
@@ -107,8 +110,10 @@ public class ConnectorPeer : IConnectorDataEvents, IMethodBinderInterceptor
     if (stop)
       try
       {
-        this.client.Sizer = null;
-        this.binder.Unbind();
+        if (this.client != null)
+          this.client.Sizer = null;
+
+        this.binder?.Unbind();
       }
       catch (Exception) { }
   }
@@ -130,7 +135,7 @@ public class ConnectorPeer : IConnectorDataEvents, IMethodBinderInterceptor
     return this.Post(NaibTypeInfo.GetHash(data), data, errorMessage);
   }
 
-  public bool Post(int packetId, object data, string errorMessage)
+  public bool Post(int packetId, object data, string? errorMessage)
   {
     return this.Post(packetId, data, errorMessage, false);
   }
@@ -140,7 +145,7 @@ public class ConnectorPeer : IConnectorDataEvents, IMethodBinderInterceptor
     return this.Post(new ConnectorPeerPacket(packetId, 0, data, null, false));
   }
 
-  public bool Post(int packetId, object data, string errorMessage, bool response)
+  public bool Post(int packetId, object data, string? errorMessage, bool response)
   {
     return this.Post(new ConnectorPeerPacket(packetId, 0, data, errorMessage, response));
   }

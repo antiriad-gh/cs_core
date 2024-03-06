@@ -1,7 +1,6 @@
 ﻿using Antiriad.Core.Serialization;
 using Antiriad.Core.Log;
 using Antiriad.Core.Helpers;
-using System;
 
 namespace Antiriad.Core.IO;
 
@@ -14,9 +13,9 @@ internal class ConnectorPeerPacket
   public short ProtocolVersion;
   public int PacketId;
   public int Sequence;
-  public string ErrorMessage;
+  public string? ErrorMessage;
   public bool IsResponse;
-  public object Context;
+  public object? Context;
   public readonly object Data;
 
   private readonly bool isError;
@@ -51,7 +50,7 @@ internal class ConnectorPeerPacket
     }
   }
 
-  public ConnectorPeerPacket(int packetId, int sequence, object data, string errorMessage, bool response)
+  public ConnectorPeerPacket(int packetId, int sequence, object data, string? errorMessage, bool response)
   {
     this.IsResponse = response;
     this.PacketId = packetId;
@@ -60,7 +59,7 @@ internal class ConnectorPeerPacket
     this.ErrorMessage = errorMessage;
   }
 
-  public T Get<T>() where T : class, new()
+  public T? Get<T>() where T : class, new()
   {
     try
     {
